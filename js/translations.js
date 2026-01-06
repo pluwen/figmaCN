@@ -2232,6 +2232,7 @@ const translations = [
   [`Open in Dev Mode`, `在开发模式中打开`],
   [`Open in Editor`, `在编辑器中打开`],
   [`Open in FigJam`, `在 FigJam 中打开`],
+  [`Open with preview disabled`, `打开（禁用预览）`],
   [`Open in Figma`, `在 Figma 中打开`],
   [`Open in new tab`, `在新标签页中打开`],
   [`Open in playground`, `在 Playground 中打开`],
