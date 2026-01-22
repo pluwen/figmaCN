@@ -41,6 +41,22 @@ function initializeTranslation(allData) {
     TEXT_NODE: 3,
   }
 
+  // 检测节点是否在代码编辑器内
+  function isNodeInCodeEditor(node) {
+    let currentElement = node.nodeType === DOM_NODE_TYPE.TEXT_NODE ? node.parentElement : node;
+    
+    while (currentElement && currentElement !== document.body) {
+      // 检测 translate="no" 属性 - 这是代码编辑器的标记
+      if (currentElement.getAttribute('translate') === 'no') {
+        return true;
+      }
+      
+      currentElement = currentElement.parentElement;
+    }
+    
+    return false;
+  }
+
   let observer = new MutationObserver(function (mutations) {
     let treeWalker = document.createTreeWalker(
       document.body,
@@ -55,6 +71,13 @@ function initializeTranslation(allData) {
           const nodeUnderVariableInput = node.classList && node.classList.value.includes('variable_name--root');
           if (nodeUnderVariableInput) {
             // 这个节点以下的子节点（包括该节点）全部过滤掉
+            return NodeFilter.FILTER_REJECT;
+          }
+
+          /**
+           * 跳过代码编辑器中的内容，避免代码关键字如 export 被翻译
+           */
+          if (isNodeInCodeEditor(node)) {
             return NodeFilter.FILTER_REJECT;
           }
 
@@ -75,16 +98,22 @@ function initializeTranslation(allData) {
 
     while (currentNode) {
       if (currentNode.nodeType === DOM_NODE_TYPE.TEXT_NODE) {
-        let key1 = currentNode.textContent;
-        if (dataMap.has(key1)) currentNode.textContent = dataMap.get(key1);
+        // 在替换前再检查一次是否在代码编辑器内
+        if (!isNodeInCodeEditor(currentNode)) {
+          let key1 = currentNode.textContent;
+          if (dataMap.has(key1)) currentNode.textContent = dataMap.get(key1);
+        }
       } else {
-        let key2 = currentNode.getAttribute('data-label');
-        if (key2 && dataMap.has(key2)) currentNode.setAttribute('data-label', dataMap.get(key2));
+        // 同样检查属性节点
+        if (!isNodeInCodeEditor(currentNode)) {
+          let key2 = currentNode.getAttribute('data-label');
+          if (key2 && dataMap.has(key2)) currentNode.setAttribute('data-label', dataMap.get(key2));
 
-        let key3 = currentNode.getAttribute('placeholder') || '';
-        const trimmedKey3 = key3.trim();
-        if (trimmedKey3 && dataMap.has(trimmedKey3)) {
-          currentNode.setAttribute('placeholder', dataMap.get(trimmedKey3));
+          let key3 = currentNode.getAttribute('placeholder') || '';
+          const trimmedKey3 = key3.trim();
+          if (trimmedKey3 && dataMap.has(trimmedKey3)) {
+            currentNode.setAttribute('placeholder', dataMap.get(trimmedKey3));
+          }
         }
       }
 
