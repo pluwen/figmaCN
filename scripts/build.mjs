@@ -3,7 +3,7 @@
  * FigmaCN 构建脚本
  *
  * 根据同一份源码，生成两个平台的扩展包：
- * - Chromium（Chrome / Edge）：直接使用根目录 manifest.json（MV3），二者扩展格式完全通用
+ * - Chromium（Chrome / Edge）：直接使用 src/manifest.json（MV3），二者扩展格式完全通用
  * - Firefox：需要 manifest 的 background.service_worker 改写为 background.scripts，
  *   并添加 browser_specific_settings（gecko id），否则 AMO 审核会缺失应用 ID
  *
@@ -18,15 +18,17 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
 const DIST = path.join(ROOT, 'dist');
 
-// 需要打包进每个平台的源文件 / 目录（相对仓库根）
+// 需要打包进每个平台的源文件 / 目录
+// src：仓库内读取位置（扩展运行时源码已统一移入 src/）
+// dest：产物内写入位置（保持扁平结构，扩展加载根 = 产物根）
 // 注意：manifest.json 由 buildTarget 单独写入（可能带平台 override），不在此列表
 const SHARED_FILES = [
-  'js/content.js',
-  'js/background.js',
-  'js/translations.json',
-  'img',
-  'LICENSE',
-  'README.md',
+  { src: 'src/js/content.js', dest: 'js/content.js' },
+  { src: 'src/js/background.js', dest: 'js/background.js' },
+  { src: 'src/js/translations.json', dest: 'js/translations.json' },
+  { src: 'src/img', dest: 'img' },
+  { src: 'LICENSE', dest: 'LICENSE' },
+  { src: 'README.md', dest: 'README.md' },
 ];
 
 // Firefox (AMO) 上注册的固定 addon ID，更新版本时必须保持一致
@@ -44,7 +46,7 @@ async function copyFile(src, dest) {
 }
 
 async function readManifest() {
-  const raw = await fs.readFile(path.join(ROOT, 'manifest.json'), 'utf8');
+  const raw = await fs.readFile(path.join(ROOT, 'src', 'manifest.json'), 'utf8');
   return JSON.parse(raw);
 }
 
@@ -80,7 +82,7 @@ async function buildTarget(targetName, manifestOverride) {
   );
 
   // 拷贝共享文件
-  for (const rel of SHARED_FILES) {
+  for (const { src: rel, dest } of SHARED_FILES) {
     const src = path.join(ROOT, rel);
     try {
       await fs.access(src);
@@ -88,7 +90,7 @@ async function buildTarget(targetName, manifestOverride) {
       // 某些文件可能不存在（如 LICENSE），跳过
       continue;
     }
-    await copyFile(src, path.join(targetDir, rel));
+    await copyFile(src, path.join(targetDir, dest));
   }
 
   console.log(`[build] ${targetName} -> ${path.relative(ROOT, targetDir)}`);

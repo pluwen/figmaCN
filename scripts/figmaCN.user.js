@@ -19,9 +19,9 @@
 
     // 远程脚本基础路径：始终拉取 master 分支最新版本
     const rawBase = 'https://raw.githubusercontent.com/Figma-Cool/figmaCN/refs/heads/master';
-    const contentScriptUrl = `${rawBase}/js/content.js`;
+    const contentScriptUrl = `${rawBase}/src/js/content.js`;
     // 翻译数据已从 translations.js 迁移为 JSON 格式，可直接解析，无需 new Function 求值
-    const translationsUrl = `${rawBase}/js/translations.json`;
+    const translationsUrl = `${rawBase}/src/js/translations.json`;
 
     console.log('FigmaCN 脚本开始加载...');
 
